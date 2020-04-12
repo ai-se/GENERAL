@@ -18,5 +18,5 @@ This code will run take the bellwethers found by traditional bellwether, GENERAL
 command: Python RQ4.py
 
 ## RQ5: Does learning from too many projects have detrimental effects?
-This code will run the traditional bellwether at level 0 showing a N^2 comparison. The code will report the runtime for a 10 * 2 comparison.
-command: Python RQ1.py
+This code will generate the Figure 10.
+command: Python RQ5.py
