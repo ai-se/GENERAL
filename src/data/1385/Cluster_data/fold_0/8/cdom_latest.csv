@@ -1,0 +1,14 @@
+,recall,precision,pf,wins
+bacula.csv,1.0,0.34,1.0,3
+bdbbasic.csv,0.84,0.37,0.91,5
+foursquared.csv,0.08,0.46,0.02,12
+impala.csv,0.05,0.19,0.02,7
+jicarilla.csv,0.0,0.0,0.0,0
+ng4j.csv,0.08,0.29,0.05,9
+open-data-kit.csv,0.85,0.35,0.68,8
+pentahoanalysistool.csv,0.0,0.0,0.0,0
+tradelink.csv,0.16,0.38,0.04,11
+turbotrader-bos.csv,1.0,0.35,0.95,6
+ultimairis.csv,1.0,0.34,0.99,4
+wikipediardware.csv,1.0,0.33,1.0,2
+yafdotnet.csv,0.58,0.39,0.36,10
