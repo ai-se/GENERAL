@@ -405,8 +405,8 @@ def get_predicted(cluster_data_loc,metrices_loc,fold,data_location,default_bellw
 if __name__ == "__main__":
     for i in range(1):
         fold = str(i)
-        data_location = 'data/1385/Cluster_data/final_results/fold_' + fold
-        cluster_data_loc = 'data/1385/Cluster_data/fold_' + fold
+        data_location = 'src/data/1385/Cluster_data/final_results/fold_' + fold
+        cluster_data_loc = 'src/data/1385/Cluster_data/fold_' + fold
         metrices_loc = '/Users/suvodeepmajumder/Documents/AI4SE/bell/data/1385/converted'
-        default_bellwether_loc = 'data/1385/Cluster_data/fold_' + str(fold) + '/0'
+        default_bellwether_loc = 'src/data/1385/Cluster_data/fold_' + str(fold) + '/0'
         results = get_predicted(cluster_data_loc,metrices_loc,fold,data_location,default_bellwether_loc)

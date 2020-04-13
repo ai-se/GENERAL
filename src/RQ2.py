@@ -590,8 +590,8 @@ class bellwether(object):
 if __name__ == "__main__":
     start = timeit.default_timer()
     path = '/Users/suvodeepmajumder/Documents/AI4SE/bellwether_comminity/data/1385/converted'
-    meta_path = 'data/1385/projects/selected_attr.pkl'
-    _data_store_path = 'data/1385/Cluster_data/'
+    meta_path = 'src/data/1385/projects/selected_attr.pkl'
+    _data_store_path = 'src/data/1385/Cluster_data/'
     attr_dict = pd.read_pickle(meta_path)
     attr_df = pd.DataFrame.from_dict(attr_dict,orient='index')
     attr_df_index = list(attr_df.index)
