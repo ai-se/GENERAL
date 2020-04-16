@@ -23,6 +23,19 @@
    // \\   // \\   // \\   // \\   // \\   // \\   // \\   // \\
 ```
 
+This site contains the scripts and data needed to supprot:
+
+```
+@misc{majumder2019learning,
+    title={Learning GENERAL Principles from Hundreds of Software Projects},
+    author={Suvodeep Majumder and Rahul Krishna and Tim Menzies},
+    year={2019},
+    eprint={1911.04250},
+    archivePrefix={arXiv},
+    primaryClass={cs.SE}
+}
+```
+
 To reproduce the results follow the instruction for each research question.
 ## RQ1: How slow are conventional bellwethermethods?
 This code will run the traditional bellwether at level 0 showing a N^2 comparison. The code will report the runtime for a 10 * 2 comparison.
