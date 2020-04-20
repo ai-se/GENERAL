@@ -33,7 +33,7 @@ bellwethers, if they exist. Also, GENERAL's hierarchical decomposition runs much
 bellwether methods.  
 
 
-This site contains the scripts and data needed to supprot:
+This site contains the scripts and data needed to support:
 
 ```
 @misc{majumder2019learning,
