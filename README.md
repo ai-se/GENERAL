@@ -22,6 +22,16 @@
   `(___)  `(___)  `(___)  `(___)  `(___)  `(___)  `(___)  `(___)
    // \\   // \\   // \\   // \\   // \\   // \\   // \\   // \\
 ```
+## Abstract
+Given a large group of software projects, there often exists  a few   exemplar project(s) that offers the best prediction for all others. Such ''bellwether projects'' can be used to make quality predictions that are general to many other projects.
+
+Existing  methods  for  finding bellwether  have two problems. Firstly, they are  very slow.  When  applied  to  the  697  projects  studied  here, standard bellwether methods   took  60  days  of  CPU  to  find  and  certify  the  bellwethers.
+Secondly, they assume that only one bellwether exists and, amongst hundreds of projects, they may exist  subgroups, each of which requires their own bellwether.  
+
+GENERAL is a new bellwether method that addresses both problems. GENERAL applies hierarchical clustering to groups of project data. At each level within a tree of clusters, one bellwether is computed from sibling projects, then promoted up the tree.  In this way, GENERAL can find multiple
+bellwethers, if they exist. Also, GENERAL's hierarchical decomposition runs much faster (and scales better) than standard
+bellwether methods.  
+
 
 This site contains the scripts and data needed to supprot:
 
