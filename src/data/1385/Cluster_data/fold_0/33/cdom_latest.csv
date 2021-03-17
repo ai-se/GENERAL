@@ -1,8 +1,0 @@
-,recall,precision,pf,wins
-adobe-source.csv,1.0,0.5,1.0,5
-bwapi.csv,0.82,0.27,0.28,6
-gisgraphy.csv,0.85,0.23,0.92,0
-lite.csv,0.0,0.0,0.0,1
-ontopia.csv,0.88,0.3,0.69,4
-scen-connect.csv,0.0,0.0,0.0,1
-smartgwt.csv,1.0,0.31,0.97,3
