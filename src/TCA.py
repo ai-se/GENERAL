@@ -7,6 +7,7 @@ import sys
 import pandas as pd
 import random
 import numpy as np
+import copy
 from operator import add 
 
 # root = os.path.join(os.getcwd().split('src')[0], 'src/defects')
@@ -32,8 +33,6 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import KFold
-
-from libtlda.tca import TransferComponentClassifier
 
 from multiprocessing import Pool, cpu_count
 from threading import Thread
@@ -82,7 +81,7 @@ def _replaceitem_logistic(x):
 
 
 def prepare_data(project, metric):
-    data_path = '../data/700/merged_data_original/' + project + '.csv'
+    data_path = 'data/merged_data_original/' + project + '.csv'
     data_df = pd.read_csv(data_path)
     data_df.rename(columns = {'Unnamed: 0':'id'},inplace = True)
 
@@ -272,32 +271,40 @@ def tca_plus(source, target):
     result = dict()
     metric = 'process'
     for src_name in source:
-        stats = []
-        val = []
-        src = prepare_data(src_name, metric)
-        for tgt_name in target:
-            tgt = prepare_data(tgt_name, metric)
-            loc = tgt['file_la'] + tgt['file_lt']
-            dcv_src, dcv_tgt = get_dcv(src, tgt)
+        try:
+            stats = []
+            val = []
+            src = prepare_data(src_name, metric)
+            for tgt_name in target:
+                try:
+                    tgt = prepare_data(tgt_name, metric)
+                    loc = tgt['file_la'] + tgt['file_lt']
+                    dcv_src, dcv_tgt = get_dcv(src, tgt)
 
-            norm_src, norm_tgt = smart_norm(src, tgt, dcv_src, dcv_tgt)
-            _train, _test = map_transform(norm_src, norm_tgt)
+                    norm_src, norm_tgt = smart_norm(src, tgt, dcv_src, dcv_tgt)
+                    _train, _test = map_transform(norm_src, norm_tgt)
 
-            clf = create_model(_train)
+                    clf = create_model(_train)
 
-            actual, predicted, predicted_proba = predict_defects(clf=clf, test=_test)
+                    actual, predicted, predicted_proba = predict_defects(clf=clf, test=_test)
 
-            abcd = metrics.measures(actual,predicted,loc)
+                    abcd = metrics.measures(actual,predicted,loc)
 
-            recall = abcd.calculate_recall()
-            pf = abcd.get_pf()
-            g = abcd.get_g_score()
-            f = abcd.calculate_f1_score()
-            pci_20 = abcd.get_pci_20()
+                    recall = abcd.calculate_recall()
+                    pf = abcd.get_pf()
+                    g = abcd.get_g_score()
+                    f = abcd.calculate_f1_score()
+                    pci_20 = abcd.get_pci_20()
 
-            print([src_name, tgt_name, recall, pf, g, f, pci_20])
+                    print([src_name, tgt_name, recall, pf, g, f, pci_20])
 
-            stats.append([src_name, tgt_name,recall, pf, g, f, pci_20])
+                    stats.append([src_name, tgt_name,recall, pf, g, f, pci_20])
+                except Exception as e:
+                    print(src_name, tgt_name, e)
+                    continue
+        except Exception as e:
+            print(src_name, tgt_name, e)
+            continue
 
     stats_df = pd.DataFrame(stats, columns = ['source', 'target', 'recell', 'pf', 'g', 'f', 'pci_20'])
     # result.update({tgt_name: stats_df})
@@ -360,8 +367,8 @@ def run_TCS(source, target):
 
 
 if __name__ == "__main__":
-    path = '../data/700/merged_data_original/'
-    meta_path = 'results/attributes/projects_attributes_all.pkl'
+    path = 'data/merged_data_original/'
+    meta_path = 'src/results/attributes/projects_attributes_all.pkl'
     projects = pd.read_pickle(meta_path)
     project_list = list(projects.keys())[20:40]
     print(project_list)
@@ -373,7 +380,7 @@ if __name__ == "__main__":
     for i in range(cores):
         print("starting thread ",i)
         selected_projects = split_projects[i]
-        t = ThreadWithReturnValue(target = run_TCS, args = [selected_projects, project_list])
+        t = ThreadWithReturnValue(target = run_TCS, args = [selected_projects, all_project_list])
         threads.append(t)
     for th in threads:
         th.start()
@@ -381,6 +388,6 @@ if __name__ == "__main__":
         response = th.join()
         results = pd.concat([results, response], axis = 0)
     
-    results.to_pickle('results/TCA/tca.pkl')
-    results.to_csv('results/TCA/tca.csv')
+    results.to_pickle('src/results/TCA/process/tca.pkl')
+    # results.to_csv('src/results/TCA/process/tca.csv')
 
