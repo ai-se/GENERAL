@@ -5,19 +5,23 @@ import sys
 import pandas as pd
 import random
 import numpy as np
+import copy
 
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+
 from sklearn import metrics
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import KFold
 
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, Lasso
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.svm import SVR
 
 def prepare_data(project, metric):
     data_path = '../data/700/merged_data_original/' + project + '.csv'
@@ -48,65 +52,75 @@ def prepare_data(project, metric):
 
 
 
-def create_models(metric):
-    meta_data = pd.read_pickle('results/TCA/tca.pkl')
-    source_projects = meta_data.Source.unique()
+def create_models(metric, fold):
+    meta_data = pd.read_pickle('results/TCA/TCA_all/tca.pkl')
+    source_projects = meta_data.source.unique()
     pseudo_source_projects = meta_data.target.unique()
 
-    # print(source_projects)
+    cluster_data_loc = 'results/mixed_data/level_2/fold_' + str(fold)
+    test_data = pd.read_pickle(cluster_data_loc + '/test_data.pkl')
+    target_projects = test_data.index.values.tolist()
 
-    src_project_map = {}
+    selected_src_projects = copy.deepcopy(pseudo_source_projects)
+    selected_src_projects = set(selected_src_projects)
+    selected_src_projects = list(selected_src_projects - set(target_projects))
+
+    data_vectors = {}
+    for src in pseudo_source_projects:
+        print(src)
+        src_data = prepare_data(src, metric)
+        src_data_vector = src_data.median().values.tolist()[:-1]
+        data_vectors[src] = src_data_vector
+
     train_X = []
-    for sp in source_projects:
-        src_data = prepare_data(sp, metric)
-        src_data_vector = src_data.median().values.tolist()
-        src_project_map[sp] = src_project_map
-        for tp in pseudo_source_projects:
-            trg_data = prepare_data(tp, metric)
-            trg_data_vector = trg_data.median().values.tolist()
-            train_X.append(src_data_vector+trg_data_vector)
+    for i in range(meta_data.shape[0]):
+        if i%1000 == 0:
+            print(i)
+        src = meta_data.iloc[i,0]
+        trg = meta_data.iloc[i,1]
+        f = meta_data.iloc[i,5]
+        pci_20 = meta_data.iloc[i,6]
+        src_data_vector = data_vectors[src]
+        trg_data_vector = data_vectors[trg]
+        train_X.append(trg_data_vector + src_data_vector)
+        
 
     train_y_f = meta_data.f.values.tolist()
     train_y_p = meta_data.pci_20.values.tolist()
 
-    clf_f = LinearRegression()
-    clf_p = LinearRegression()
+
+    clf_f = SVR()
+    clf_p = SVR()
 
     clf_f.fit(train_X,train_y_f)
     clf_p.fit(train_X,train_y_p)
 
-    cluster_data_loc = 'results/mixed_data/level_2/fold_0'
-    test_data = pd.read_pickle(cluster_data_loc + '/test_data.pkl')
-    target_projects = test_data.index.values.tolist()[0:20]
 
     test_X = []
     test_map = []
-    for sp in source_projects:
+    for sp in pseudo_source_projects:
         src_data = prepare_data(sp, metric)
-        src_data_vector = src_data.median().values.tolist()
-        src_project_map[sp] = src_project_map
+        src_data_vector = src_data.median().values.tolist()[:-1]
         for tp in target_projects:
             trg_data = prepare_data(tp, metric)
-            trg_data_vector = trg_data.median().values.tolist()
-            test_X.append(src_data_vector+trg_data_vector)
+            trg_data_vector = trg_data.median().values.tolist()[:-1]
+            test_X.append(trg_data_vector + src_data_vector)
             test_map.append([sp, tp])
     
     predicted_f = clf_f.predict(test_X)
     predicted_p = clf_p.predict(test_X)
 
+
     for i in range(len(predicted_f)):
-        test_map[i].append(predicted_f[i])
-        test_map[i].append(predicted_p[i])
+        test_map[i].append(round(predicted_f[i],2))
+        test_map[i].append(round(predicted_p[i],2))
 
     final_result = test_map
     final_result_df = pd.DataFrame(final_result, columns=['src','trg', 'f', 'pci_20'])
-    final_result_df.to_csv('results/TCA/tptl.csv')
-
-
-
-
+    final_result_df.to_csv('results/mixed_data/level_2/fold_' + str(fold) + '/predicted_source_process.csv')
 
 
 if __name__ == "__main__":
-    metric = 'all'
-    create_models(metric = metric)
+    for i in range(1,10):
+        metric = 'process'
+        create_models(metric = metric, fold = i)

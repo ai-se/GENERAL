@@ -20,4 +20,3 @@ def df_norm(dframe, type="normal"):
         dframe = (dframe - dframe.mean()) / (dframe.std() + + 1e-32)
         dframe[col[-1]] = bugs
         return dframe[col]
-

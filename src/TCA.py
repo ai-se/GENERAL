@@ -8,6 +8,7 @@ import pandas as pd
 import random
 import numpy as np
 import copy
+from operator import add 
 
 # root = os.path.join(os.getcwd().split('src')[0], 'src/defects')
 # if root not in sys.path:
@@ -20,9 +21,7 @@ from mklaren.kernel.kinterface import Kinterface
 from mklaren.kernel.kernel import *
 from mklaren.projection.icd import ICD
 from pdb import set_trace
-
 from scipy.spatial.distance import pdist, squareform
-
 
 
 from sklearn.model_selection import train_test_split
@@ -67,6 +66,18 @@ def apply_smote(df):
         df = smt.run()
         df.columns = cols
         return df
+
+def _replaceitem(x):
+    if x >= 0.5:
+        return 0.5
+    else:
+        return 0.0
+
+def _replaceitem_logistic(x):
+    if x >= 0.5:
+        return 1
+    else:
+        return 0
 
 
 def prepare_data(project, metric):
@@ -153,7 +164,7 @@ def create_model(train):
     train_y = train.Bugs
     train_X = train.drop(labels = ['Bugs'],axis = 1)
 
-    clf = RandomForestClassifier()
+    clf = LogisticRegression()
     clf.fit(train_X, train_y)
 
     return clf 
@@ -163,8 +174,9 @@ def predict_defects(clf, test):
     test_X = test.drop(labels = ['Bugs'],axis = 1)
 
     predicted = clf.predict(test_X)
+    predicted_proba = clf.predict_proba(test_X)
 
-    return test_y, predicted
+    return test_y, predicted, predicted_proba
 
 
 
@@ -274,7 +286,7 @@ def tca_plus(source, target):
 
                     clf = create_model(_train)
 
-                    actual, predicted = predict_defects(clf=clf, test=_test)
+                    actual, predicted, predicted_proba = predict_defects(clf=clf, test=_test)
 
                     abcd = metrics.measures(actual,predicted,loc)
 
@@ -299,6 +311,55 @@ def tca_plus(source, target):
     return stats_df
 
 
+def tca_plus_test(source, target):
+    """
+    TCA: Transfer Component Analysis
+    :param source:
+    :param target:
+    :param n_rep: number of repeats
+    :return: result
+    """
+    result = dict()
+    metric = 'process'
+    predicted_probability = []
+    for src_name in source:
+        stats = []
+        val = []
+        src = prepare_data(src_name, metric)
+        for tgt_name in target:
+            tgt = prepare_data(tgt_name, metric)
+            loc = tgt['file_la'] + tgt['file_lt']
+            dcv_src, dcv_tgt = get_dcv(src, tgt)
+
+            norm_src, norm_tgt = smart_norm(src, tgt, dcv_src, dcv_tgt)
+            _train, _test = map_transform(norm_src, norm_tgt)
+
+            clf = create_model(_train)
+
+            actual, predicted, predicted_proba = predict_defects(clf=clf, test=_test)
+
+            predicted_proba = np.array(predicted_proba)
+            predicted_proba = predicted_proba[:,1]
+
+            predicted_probability.append(predicted_proba)
+
+    predicted_probability_f = list(map(_replaceitem, predicted_probability[0]))
+    predicted_probability_p = [x / 2 for x in predicted_probability[1]]
+
+    final_predicted_proba = list(map(add, predicted_probability_f, predicted_probability_p)) 
+
+    predicted = list(map(_replaceitem_logistic, final_predicted_proba))
+
+    abcd = metrics.measures(actual,predicted,loc)
+
+    recall = abcd.calculate_recall()
+    pf = abcd.get_pf()
+    g = abcd.get_g_score()
+    f = abcd.calculate_f1_score()
+    pci_20 = abcd.get_pci_20()
+    return tgt_name, recall, pf, g, f, pci_20
+
+
 def run_TCS(source, target):
     stats_df = tca_plus(source,target)
     return stats_df
@@ -309,10 +370,10 @@ if __name__ == "__main__":
     path = 'data/merged_data_original/'
     meta_path = 'src/results/attributes/projects_attributes_all.pkl'
     projects = pd.read_pickle(meta_path)
-    all_project_list = list(projects.keys())
-    project_list = copy.deepcopy(all_project_list)
-    # project_list = project_list[700:]
-    cores = 10
+    project_list = list(projects.keys())[20:40]
+    print(project_list)
+    cores = 20
+    # samples = [f for f in listdir(path) if isfile(join(path, f))]
     threads = []
     results = pd.DataFrame()
     split_projects = np.array_split(project_list, cores)
