@@ -23,6 +23,24 @@ from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.svm import SVR
 
+from multiprocessing import Pool, cpu_count
+from threading import Thread
+from multiprocessing import Queue
+
+class ThreadWithReturnValue(Thread):
+    def __init__(self, group=None, target=None, name=None,
+                 args=(), kwargs={}, Verbose=None):
+        Thread.__init__(self, group, target, name, args, kwargs)
+        self._return = None
+    def run(self):
+        #print(type(self._target))
+        if self._target is not None:
+            self._return = self._target(*self._args,
+                                                **self._kwargs)
+    def join(self, *args):
+        Thread.join(self, *args)
+        return self._return
+
 def prepare_data(project, metric):
     data_path = '../data/700/merged_data_original/' + project + '.csv'
     data_df = pd.read_csv(data_path)
@@ -118,9 +136,16 @@ def create_models(metric, fold):
     final_result = test_map
     final_result_df = pd.DataFrame(final_result, columns=['src','trg', 'f', 'pci_20'])
     final_result_df.to_csv('results/mixed_data/level_2/fold_' + str(fold) + '/predicted_source_process.csv')
+    return None
 
 
 if __name__ == "__main__":
-    for i in range(1,10):
+    threads = []
+    for i in range(10):
         metric = 'process'
-        create_models(metric = metric, fold = i)
+        t = ThreadWithReturnValue(target = create_models, args = [metric, i])
+        threads.append(t)
+    for th in threads:
+        th.start()
+    for th in threads:
+        response = th.join()
